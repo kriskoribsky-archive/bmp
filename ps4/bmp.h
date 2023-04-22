@@ -5,23 +5,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define BMP_HEADER 0x4d42   // "MB"
-#define BMP_WORD 4          // 4 bytes
-#define DWORD 32            // 32 bits
-#define MAX_SIZE UINT32_MAX // max width/height
-#define PADDING_CHAR '\0'   // pixels
-
-#define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
-#define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
-
-#define CHECK_NULL(ptr) \
-    if (ptr == NULL)    \
-        return NULL;
-
-#define FREE(ptr) \
-    free(ptr);    \
-    ptr = NULL
-
 /**
  * Structure contains information about the type, size, layout, dimensions
  * and color format of a BMP file. Size of structure is 54 bytes.
@@ -105,6 +88,18 @@ bool write_bmp(FILE *stream, const struct bmp_image *image);
 struct bmp_image *copy_bmp(const struct bmp_image *image);
 
 /**
+ * Create new BMP image
+ *
+ * Performs a deep copy of a header with new dimensions.
+ * Allocates new memory for pixel array of size width x height.
+ * DOESN'T COPY any pixel memory.
+ *
+ * @param header the BMP header structure
+ * @return reference to the `bmp_image` structure or `NULL` if `header` is invalid
+ */
+struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, uint32_t height);
+
+/**
  * Reads BMP header from input stream
  *
  * Reads and returns BMP header from opened input stream. The header is located
@@ -151,6 +146,24 @@ struct bmp_header *copy_bmp_header(const struct bmp_header *header);
  * @return the pixels of the image or `NULL` if pixels or header are broken
  */
 struct pixel *copy_data(const struct bmp_header *header, const struct pixel *data);
+
+/**
+ * Check if bmp image header is valid.
+ *
+ * Use metadata from bmp header to determine whether bmp image is valid.
+ * Compare values with predefined supported bmp image types.
+ * Header is valid if:
+ *
+ * 1. its magic number is 0x4d42
+ * 2. image data begins immediately after the header data
+ * 3. the DIB header is the correct size
+ * 4. there is only one image plane
+ * 5. there is no compression
+ * 6. num_colors and important_colors are both 0
+ * 7. the image has either 16 or 24 bits per pixel
+ * 8. the size and imagesize fields are correct in relation to the bits, width, and height fields or the file size
+ */
+bool bmp_header_valid(const struct bmp_header *header);
 
 /**
  * Calculate gross pixel array row size without padding

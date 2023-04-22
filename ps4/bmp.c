@@ -2,8 +2,65 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
+
+#ifdef DEBUG
+#include <assert.h>
+#define ASSERT(expr) assert(expr)
+#else
+#define ASSERT(expr) ((void)0)
+#endif
 
 #include "bmp.h"
+
+#define FREE(ptr) \
+    free(ptr);    \
+    ptr = NULL
+
+#define CHECK_NULL(ptr) \
+    if (ptr == NULL)    \
+        return NULL;
+
+#define CHECK_VALID_BMP(header)    \g
+    if (!bmp_header_valid(header)) \
+        return NULL;
+
+#define CHECK_METADATA(expr) \
+    ASSERT((expr));          \
+    if ((expr) == false)     \
+        return false;
+
+/* currently supported types of bmp metadata */
+enum BMP_META
+{
+    MAGIC = 0x4d42,                     // "BM" (0x42, 0x4D)
+                                        // file size
+    RESERVED1 = 0,                      // not used (0)
+    RESERVED2 = 0,                      // not used (0)
+    OFFSET = sizeof(struct bmp_header), // offset to image data (54B)
+    DIB_SIZE = 40,                      // DIB header size (40B)
+    MIN_SIZE = 1,                       // width/height in pixels
+    MAX_SIZE = UINT32_MAX,              // width/height in pixels
+    PLANES = 1,                         // number of color planes
+    BPP24 = 24,                         // bits per pixel (1/4/8/24)
+    BPP16 = 16,                         // bits per pixel (1/4/8/24)
+    COMPRESSION = 0,                    // compression type (0/1/2) 0
+    XPPM = 0,                           // X Pixels per meter (0)
+    YPPM = 0,                           // Y Pixels per meter (0)
+    NUM_CLR = 0,                        // number of colors (0)
+    IMPORANT_CLR = 0                    // important colors (0)
+};
+
+/* properties of bmp image format */
+enum BMP_FORMAT
+{
+    WORD = 4,           // 4 bytes
+    DWORD = 32,         // 32 bits
+    PADDING_CHAR = '\0' // pixel row padding
+};
+
+#define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
+#define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
 
 /* private functions */
 uint16_t swap_uint16(uint16_t x);
@@ -92,6 +149,42 @@ struct bmp_image *copy_bmp(const struct bmp_image *image)
     return copy;
 }
 
+struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, uint32_t height)
+{
+    CHECK_NULL(header);
+    CHECK_VALID_BMP(header);
+
+    struct bmp_image *copy = malloc(sizeof(struct bmp_image));
+    CHECK_NULL(copy);
+
+    struct bmp_header *header_copy = copy_bmp_header(header);
+    if (header_copy == NULL)
+    {
+        FREE(copy);
+        return NULL;
+    }
+
+    // update metadata & size
+    header_copy->width = width;
+    header_copy->height = height;
+    header_copy->size = pixel_array_size(header_copy);
+    CHECK_VALID_BMP(header_copy);
+
+    // allocate memory for pixel array, but do not copy any data
+    struct pixel *data_copy = malloc(width * height * sizeof(struct pixel));
+    if (data_copy == NULL)
+    {
+        FREE(copy);
+        FREE(header_copy);
+        return NULL;
+    }
+
+    copy->header = header_copy;
+    copy->data = data_copy;
+
+    return copy;
+}
+
 struct bmp_header *read_bmp_header(FILE *stream)
 {
     CHECK_NULL(stream);
@@ -106,7 +199,7 @@ struct bmp_header *read_bmp_header(FILE *stream)
     if (IS_BIG_ENDIAN)
         swap_endianness(header);
 
-    return header->type != BMP_HEADER ? NULL : header;
+    return bmp_header_valid(header) ? header : NULL;
 }
 
 struct pixel *read_data(FILE *stream, const struct bmp_header *header)
@@ -160,6 +253,23 @@ struct pixel *copy_data(const struct bmp_header *header, const struct pixel *dat
     return data_copy;
 }
 
+bool bmp_header_valid(const struct bmp_header *header)
+{
+    CHECK_METADATA(header->type == MAGIC);
+    CHECK_METADATA(header->offset == OFFSET);
+    CHECK_METADATA(header->dib_size == DIB_SIZE);
+    CHECK_METADATA(header->planes == PLANES);
+    CHECK_METADATA(header->compression == COMPRESSION);
+    CHECK_METADATA(header->num_colors == NUM_CLR);
+    CHECK_METADATA(header->important_colors == IMPORANT_CLR);
+    CHECK_METADATA(header->bpp == BPP16 || header->bpp == BPP24);
+    CHECK_METADATA(header->width >= MIN_SIZE && header->width <= MAX_SIZE);
+    CHECK_METADATA(header->height >= MIN_SIZE && header->height <= MAX_SIZE);
+    CHECK_METADATA(header->size == pixel_array_size(header));
+
+    return true;
+}
+
 uint32_t row_size(const struct bmp_header *header)
 {
     return ((header->bpp * header->width) / DWORD) * BMP_WORD;
@@ -172,7 +282,7 @@ uint8_t data_padding(const struct bmp_header *header)
     return (BMP_WORD - cols % BMP_WORD) % BMP_WORD;
 }
 
-uint32_t bmp_size(const struct bmp_header *header)
+uint32_t pixel_array_size(const struct bmp_header *header)
 {
     return header->height * data_padding(header);
 }
