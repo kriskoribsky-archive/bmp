@@ -19,8 +19,11 @@ int main(void)
     // FILE *fr = fopen("data/assets/saboteur.bmp", "rb");
     // FILE *fw = fopen("build/results/out/saboteur-out.bmp", "wb");
 
-    FILE *fr = fopen("data/assets/adventurer.bmp", "rb");
-    FILE *fw = fopen("build/results/out/adventurer-out.bmp", "wb");
+    // FILE *fr = fopen("data/assets/adventurer.bmp", "rb");
+    // FILE *fw = fopen("build/results/out/adventurer-out.bmp", "wb");
+
+    FILE *fr = fopen("data/assets/prva.akcia.bmp", "rb");
+    FILE *fw = fopen("build/results/out/prva.akcia-out.bmp", "wb");
 
     struct bmp_image *img = read_bmp(fr);
 

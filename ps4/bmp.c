@@ -6,6 +6,9 @@
 
 #define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
 #define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
+#define CHECK_NULL(ptr) \
+    if (ptr == NULL)    \
+        return NULL;
 
 /* private functions */
 uint16_t swap_uint16(uint16_t x);
@@ -15,10 +18,7 @@ void swap_endianness(struct bmp_header *header);
 /* public functions */
 struct bmp_image *read_bmp(FILE *stream)
 {
-    if (stream == NULL)
-    {
-        return NULL;
-    }
+    CHECK_NULL(stream);
 
     struct bmp_image *img = malloc(sizeof(struct bmp_image));
 
@@ -42,16 +42,10 @@ struct bmp_image *read_bmp(FILE *stream)
 
 struct bmp_header *read_bmp_header(FILE *stream)
 {
-    if (stream == NULL)
-    {
-        return NULL;
-    }
+    CHECK_NULL(stream);
 
     struct bmp_header *header = malloc(sizeof(struct bmp_header));
-    if (header == NULL)
-    {
-        return NULL;
-    }
+    CHECK_NULL(header);
 
     fseek(stream, 0, SEEK_SET);
     fread(header, sizeof(struct bmp_header), 1, stream);
@@ -65,16 +59,11 @@ struct bmp_header *read_bmp_header(FILE *stream)
 
 struct pixel *read_data(FILE *stream, const struct bmp_header *header)
 {
-    if (stream == NULL || header == NULL)
-    {
-        return NULL;
-    }
+    CHECK_NULL(stream);
+    CHECK_NULL(header);
 
     struct pixel *data = malloc(header->width * header->height * sizeof(struct pixel));
-    if (data == NULL)
-    {
-        return NULL;
-    }
+    CHECK_NULL(data);
 
     uint32_t offset = header->offset;
     uint32_t width = header->width;
@@ -94,10 +83,8 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
 
 bool write_bmp(FILE *stream, const struct bmp_image *image)
 {
-    if (stream == NULL || image == NULL)
-    {
-        return false;
-    }
+    CHECK_NULL(stream);
+    CHECK_NULL(image);
 
     fseek(stream, 0, SEEK_SET);
     fwrite(image->header, sizeof(struct bmp_header), 1, stream);
