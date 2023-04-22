@@ -4,12 +4,6 @@
 
 #include "bmp.h"
 
-#define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
-#define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
-#define CHECK_NULL(ptr) \
-    if (ptr == NULL)    \
-        return NULL;
-
 /* private functions */
 uint16_t swap_uint16(uint16_t x);
 uint32_t swap_uint32(uint32_t x);
@@ -38,6 +32,67 @@ struct bmp_image *read_bmp(FILE *stream)
     }
 
     return img;
+}
+
+bool write_bmp(FILE *stream, const struct bmp_image *image)
+{
+    CHECK_NULL(stream);
+    CHECK_NULL(image);
+
+    fseek(stream, 0, SEEK_SET);
+    fwrite(image->header, sizeof(struct bmp_header), 1, stream);
+
+    uint32_t offset = image->header->offset;
+    uint32_t width = image->header->width;
+    uint32_t height = image->header->height;
+    uint16_t bpp = image->header->bpp;
+
+    uint8_t pad_bytes = (BMP_WORD - ((width * bpp / BYTE) % BMP_WORD)) % BMP_WORD;
+    uint8_t padding[pad_bytes];
+    memset(padding, PADDING_CHAR, pad_bytes);
+
+    // swap back to little endian
+    if (IS_BIG_ENDIAN)
+        swap_endianness(image->header);
+
+    fseek(stream, offset, SEEK_SET);      // skip header & color pallette
+    for (uint32_t i = 0; i < height; i++) // write padded pixel rows
+    {
+        fwrite(image->data + i * width, sizeof(struct pixel), width, stream);
+        fwrite(&padding, sizeof(padding), 1, stream);
+    }
+    return true;
+}
+
+struct bmp_image *copy_bmp(const struct bmp_image *image)
+{
+    CHECK_NULL(image);
+
+    struct bmp_image *new = malloc(sizeof(struct bmp_image));
+    CHECK_NULL(new);
+
+    size_t header_bytes = sizeof(struct bmp_header);
+    struct bmp_header *new_header = malloc(header_bytes);
+    if (new_header == NULL)
+    {
+        free(new);
+        return NULL;
+    }
+    memcpy(new_header, image->header, header_bytes);
+
+    size_t pixels_bytes = image->header->width * image->header->height * sizeof(struct pixel);
+    struct pixel *new_data = malloc(pixels_bytes);
+    if (new_data == NULL)
+    {
+        free(new);
+        free(new_header);
+        return NULL;
+    }
+    memcpy(new_data, image->data, pixels_bytes);
+
+    new->header = new_header;
+    new->data = new_data;
+    return new;
 }
 
 struct bmp_header *read_bmp_header(FILE *stream)
@@ -79,36 +134,6 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
         fseek(stream, pad_bytes, SEEK_CUR);
     }
     return data;
-}
-
-bool write_bmp(FILE *stream, const struct bmp_image *image)
-{
-    CHECK_NULL(stream);
-    CHECK_NULL(image);
-
-    fseek(stream, 0, SEEK_SET);
-    fwrite(image->header, sizeof(struct bmp_header), 1, stream);
-
-    uint32_t offset = image->header->offset;
-    uint32_t width = image->header->width;
-    uint32_t height = image->header->height;
-    uint16_t bpp = image->header->bpp;
-
-    uint8_t pad_bytes = (BMP_WORD - ((width * bpp / BYTE) % BMP_WORD)) % BMP_WORD;
-    uint8_t padding[pad_bytes];
-    memset(padding, PADDING_CHAR, pad_bytes);
-
-    // swap back to little endian
-    if (IS_BIG_ENDIAN)
-        swap_endianness(image->header);
-
-    fseek(stream, offset, SEEK_SET);      // skip header & color pallette
-    for (uint32_t i = 0; i < height; i++) // write padded pixel rows
-    {
-        fwrite(image->data + i * width, sizeof(struct pixel), width, stream);
-        fwrite(&padding, sizeof(padding), 1, stream);
-    }
-    return true;
 }
 
 void free_bmp_image(struct bmp_image *image)

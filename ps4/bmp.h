@@ -7,8 +7,15 @@
 
 #define BMP_HEADER 0x4d42 // "MB"
 #define BMP_WORD 4        // DWORD
-#define PADDING_CHAR '\0'
+#define PADDING_CHAR '\0' // pixels
 #define BYTE 8
+
+#define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
+#define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
+
+#define CHECK_NULL(ptr) \
+    if (ptr == NULL)    \
+        return NULL;
 
 /**
  * Structure contains information about the type, size, layout, dimensions
@@ -80,6 +87,17 @@ struct bmp_image *read_bmp(FILE *stream);
  * @return `true`, if BMP image was saved successfully, `false` otherwise.
  */
 bool write_bmp(FILE *stream, const struct bmp_image *image);
+
+/**
+ * Copy BMP image
+ *
+ * Performs deep copy of image and data it points to. If the original
+ * image is not provided, returns `NULL`
+ *
+ * @param image the image to copy
+ * @return reference to the `bmp_image` structure of the copied image or `NULL` if `image` is `NULL`
+ */
+struct bmp_image *copy_bmp(const struct bmp_image *image);
 
 /**
  * Reads BMP header from input stream
