@@ -68,31 +68,28 @@ struct bmp_image *copy_bmp(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    struct bmp_image *new = malloc(sizeof(struct bmp_image));
-    CHECK_NULL(new);
+    struct bmp_image *copy = malloc(sizeof(struct bmp_image));
+    CHECK_NULL(copy);
 
-    size_t header_bytes = sizeof(struct bmp_header);
-    struct bmp_header *new_header = malloc(header_bytes);
-    if (new_header == NULL)
+    struct bmp_header *header_copy = copy_bmp_header(image->header);
+    if (header_copy == NULL)
     {
-        free(new);
+        FREE(copy);
         return NULL;
     }
-    memcpy(new_header, image->header, header_bytes);
 
-    size_t pixels_bytes = image->header->width * image->header->height * sizeof(struct pixel);
-    struct pixel *new_data = malloc(pixels_bytes);
-    if (new_data == NULL)
+    struct pixel *data_copy = copy_data(image->header, image->data);
+    if (data_copy == NULL)
     {
-        free(new);
-        free(new_header);
+        FREE(copy);
+        FREE(header_copy);
         return NULL;
     }
-    memcpy(new_data, image->data, pixels_bytes);
 
-    new->header = new_header;
-    new->data = new_data;
-    return new;
+    copy->header = header_copy;
+    copy->data = data_copy;
+
+    return copy;
 }
 
 struct bmp_header *read_bmp_header(FILE *stream)
@@ -136,15 +133,40 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
     return data;
 }
 
+struct bmp_header *copy_bmp_header(const struct bmp_header *header)
+{
+    CHECK_NULL(header);
+
+    size_t bytes = sizeof(struct bmp_header);
+
+    struct bmp_header *header_copy = malloc(bytes);
+    CHECK_NULL(header_copy);
+
+    memcpy(header_copy, header, bytes);
+
+    return header_copy;
+}
+
+struct pixel *copy_data(const struct bmp_header *header, const struct pixel *data)
+{
+    CHECK_NULL(header);
+    CHECK_NULL(data);
+
+    size_t bytes = header->width * header->height * sizeof(struct pixel);
+
+    struct pixel *data_copy = malloc(bytes);
+    CHECK_NULL(data_copy);
+
+    memcpy(data_copy, data, bytes);
+
+    return data_copy;
+}
+
 void free_bmp_image(struct bmp_image *image)
 {
-    free(image->header);
-    image->header = NULL;
-
-    free(image->data);
-    image->data = NULL;
-
-    free(image);
+    FREE(image->header);
+    FREE(image->data);
+    FREE(image);
 }
 
 void swap_endianness(struct bmp_header *header)

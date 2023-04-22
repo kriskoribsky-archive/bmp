@@ -17,6 +17,10 @@
     if (ptr == NULL)    \
         return NULL;
 
+#define FREE(ptr) \
+    free(ptr);    \
+    ptr = NULL
+
 /**
  * Structure contains information about the type, size, layout, dimensions
  * and color format of a BMP file. Size of structure is 54 bytes.
@@ -91,7 +95,7 @@ bool write_bmp(FILE *stream, const struct bmp_image *image);
 /**
  * Copy BMP image
  *
- * Performs deep copy of image and data it points to. If the original
+ * Performs a deep copy of image and data it points to. If the original
  * image is not provided, returns `NULL`
  *
  * @param image the image to copy
@@ -122,6 +126,30 @@ struct bmp_header *read_bmp_header(FILE *stream);
  * @return the pixels of the image or `NULL` if stream or header are broken
  */
 struct pixel *read_data(FILE *stream, const struct bmp_header *header);
+
+/**
+ * Copy BMP header
+ *
+ * Performs a deep copy of BMP header. If the original header is not
+ * provied, returns `NULL`.
+ *
+ * @param header the BMP header structure
+ * @return `bmp_header` structure of the copied header or `NULL` if header is `NULL`
+ */
+struct bmp_header *copy_bmp_header(const struct bmp_header *header);
+
+/**
+ * Copy the pixels
+ *
+ * Performs a deep copy of pixels. If the reference to the original
+ * pixels is not provied,  returns `NULL`. If the header is not provided
+ * also returns `NULL`.
+ *
+ * @param header the BMP header structure
+ * @param data reference to the original pixel data to copy
+ * @return the pixels of the image or `NULL` if pixels or header are broken
+ */
+struct pixel *copy_data(const struct bmp_header *header, const struct pixel *data);
 
 /**
  * Free the BMP image from the memory

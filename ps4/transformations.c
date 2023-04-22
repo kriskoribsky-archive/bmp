@@ -55,7 +55,7 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
         memcpy(&copy->data[botom_row * width], &copy->data[top_row * width], bytes);
         memcpy(&copy->data[top_row * width], tmp, bytes);
 
-        free(tmp);
+        FREE(tmp);
     }
     return copy;
 }
