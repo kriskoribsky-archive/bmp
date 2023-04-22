@@ -8,7 +8,7 @@
 #define BMP_HEADER 0x4d42 // "MB"
 #define BMP_WORD 4        // DWORD
 #define PADDING_CHAR '\0' // pixels
-#define BYTE 8
+#define BYTE 8            // 8 bits
 
 #define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
 #define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
