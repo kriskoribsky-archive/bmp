@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "bmp.h"
 
@@ -45,9 +46,8 @@ bool write_bmp(FILE *stream, const struct bmp_image *image)
     uint32_t offset = image->header->offset;
     uint32_t width = image->header->width;
     uint32_t height = image->header->height;
-    uint16_t bpp = image->header->bpp;
+    uint8_t pad_bytes = data_padding(image->header);
 
-    uint8_t pad_bytes = (BMP_WORD - ((width * bpp / BYTE) % BMP_WORD)) % BMP_WORD;
     uint8_t padding[pad_bytes];
     memset(padding, PADDING_CHAR, pad_bytes);
 
@@ -120,9 +120,7 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
     uint32_t offset = header->offset;
     uint32_t width = header->width;
     uint32_t height = header->height;
-    uint16_t bpp = header->bpp;
-
-    uint8_t pad_bytes = (BMP_WORD - ((width * bpp / BYTE) % BMP_WORD)) % BMP_WORD;
+    uint8_t pad_bytes = data_padding(header);
 
     fseek(stream, offset, SEEK_SET);      // skip header & color pallette
     for (uint32_t i = 0; i < height; i++) // load pixel rows without padding
@@ -160,6 +158,23 @@ struct pixel *copy_data(const struct bmp_header *header, const struct pixel *dat
     memcpy(data_copy, data, bytes);
 
     return data_copy;
+}
+
+uint32_t row_size(const struct bmp_header *header)
+{
+    return ((header->bpp * header->width) / DWORD) * BMP_WORD;
+}
+
+uint8_t data_padding(const struct bmp_header *header)
+{
+    uint32_t cols = row_size(header);
+
+    return (BMP_WORD - cols % BMP_WORD) % BMP_WORD;
+}
+
+uint32_t bmp_size(const struct bmp_header *header)
+{
+    return header->height * data_padding(header);
 }
 
 void free_bmp_image(struct bmp_image *image)

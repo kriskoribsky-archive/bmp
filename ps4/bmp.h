@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define BMP_HEADER 0x4d42 // "MB"
-#define BMP_WORD 4        // DWORD
-#define PADDING_CHAR '\0' // pixels
-#define BYTE 8            // 8 bits
+#define BMP_HEADER 0x4d42   // "MB"
+#define BMP_WORD 4          // 4 bytes
+#define DWORD 32            // 32 bits
+#define MAX_SIZE UINT32_MAX // max width/height
+#define PADDING_CHAR '\0'   // pixels
 
 #define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
 #define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
@@ -150,6 +151,41 @@ struct bmp_header *copy_bmp_header(const struct bmp_header *header);
  * @return the pixels of the image or `NULL` if pixels or header are broken
  */
 struct pixel *copy_data(const struct bmp_header *header, const struct pixel *data);
+
+/**
+ * Calculate gross pixel array row size without padding
+ *
+ * The bits representing the bitmap pixels are packed in rows (scan lines).
+ * This function calculates number of bytes necessary to store one row of pixels.
+ *
+ * @param header the BMP header structure
+ * @return number of bytes in each row of pixel array (without padding bytes)
+ */
+uint32_t row_size(const struct bmp_header *header);
+
+/**
+ * Calculate image data padding
+ *
+ * The pixel array is a block of 32-bit DWORDs. Padding bytes must be appended
+ * to the end of the rows in order to bring up the length of the rows
+ * to a multiple of four bytes.
+ *
+ * @param header the BMP header structure
+ * @return number of bytes used for padding for each pixel row
+ */
+uint8_t data_padding(const struct bmp_header *header);
+
+/**
+ * Calculate total pixel array size with padding
+ *
+ * Uses metadata from header to calculate total bmp image size in bytes.
+ * Calculated size corresponds to size in bmp header file size,
+ * which is located right after tha magic file format.
+ *
+ * @param header the BMP header structure
+ * @return size of image in bytes
+ */
+uint32_t pixel_array_size(const struct bmp_header *header);
 
 /**
  * Free the BMP image from the memory
