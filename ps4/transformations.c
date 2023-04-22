@@ -9,6 +9,7 @@ struct bmp_image *flip_horizontally(const struct bmp_image *image)
     CHECK_NULL(image);
 
     struct bmp_image *copy = copy_bmp(image);
+    CHECK_NULL(copy);
 
     uint32_t width = copy->header->width;
     uint32_t height = copy->header->height;
@@ -33,6 +34,7 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
     CHECK_NULL(image);
 
     struct bmp_image *copy = copy_bmp(image);
+    CHECK_NULL(copy);
 
     uint32_t width = copy->header->width;
     uint32_t height = copy->header->height;
@@ -58,6 +60,54 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
     return copy;
 }
 
+struct bmp_image *rotate_right(const struct bmp_image *image)
+{
+    CHECK_NULL(image);
 
+    struct bmp_image *copy = copy_bmp(image);
+    CHECK_NULL(copy);
 
+    uint32_t width = copy->header->width;
+    uint32_t height = copy->header->height;
 
+    // overwrite copied pixel data with rotated data
+    for (uint32_t row = 0; row < height; row++)
+    {
+        for (uint32_t col = 0; col < width; col++)
+        {
+            memcpy(&copy->data[(width - 1 - col) * height + row], &image->data[row * width + col], sizeof(struct pixel));
+        }
+    }
+
+    // update header metadata
+    copy->header->width = image->header->height;
+    copy->header->height = image->header->width;
+
+    return copy;
+}
+
+struct bmp_image *rotate_left(const struct bmp_image *image)
+{
+    CHECK_NULL(image);
+
+    struct bmp_image *copy = copy_bmp(image);
+    CHECK_NULL(copy);
+
+    uint32_t width = copy->header->width;
+    uint32_t height = copy->header->height;
+
+    // overwrite copied pixel data with rotated data
+    for (uint32_t row = 0; row < height; row++)
+    {
+        for (uint32_t col = 0; col < width; col++)
+        {
+            memcpy(&copy->data[col * height + height - 1 - row], &image->data[row * width + col], sizeof(struct pixel));
+        }
+    }
+
+    // update header metadata
+    copy->header->width = image->header->height;
+    copy->header->height = image->header->width;
+
+    return copy;
+}
