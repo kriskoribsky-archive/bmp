@@ -41,20 +41,20 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
 
     uint32_t width = copy->header->width;
     uint32_t height = copy->header->height;
-    size_t bytes = width * sizeof(struct pixel);
+    size_t row_bytes = width * sizeof(struct pixel);
 
     // flipping vertically means flipping along horizontal axis
     // bmp images are stored in bottom to top order
     for (uint32_t botom_row = 0, top_row = height - 1; botom_row < top_row; botom_row++, top_row--)
     {
-        memcpy(&copy->data[botom_row * width], &image->data[top_row * width], bytes);
-        memcpy(&copy->data[top_row * width], &image->data[botom_row * width], bytes);
+        memcpy(&copy->data[botom_row * width], &image->data[top_row * width], row_bytes);
+        memcpy(&copy->data[top_row * width], &image->data[botom_row * width], row_bytes);
     }
 
     // copy the middle row
     if (height % 2 == 1)
     {
-        memcpy(&copy->data[height / 2 * width], &image->data[height / 2 * width], bytes);
+        memcpy(&copy->data[height / 2 * width], &image->data[height / 2 * width], row_bytes);
     }
 
     return copy;
@@ -108,6 +108,30 @@ struct bmp_image *rotate_left(const struct bmp_image *image)
     // update header metadata
     copy->header->width = image->header->height;
     copy->header->height = image->header->width;
+
+    return copy;
+}
+
+struct bmp_image *crop(const struct bmp_image *image, const uint32_t start_y, const uint32_t start_x, const uint32_t height, const uint32_t width)
+{
+    CHECK_NULL(image);
+
+    if (start_x + width > image->header->width || start_y + height > image->header->height)
+    {
+        return NULL;
+    }
+
+    struct bmp_image *copy = create_bmp(image->header, width, height);
+    CHECK_NULL(copy);
+
+    uint32_t old_w = image->header->width;
+    uint32_t start_row = start_y * old_w;
+    size_t row_bytes = width * sizeof(struct pixel);
+
+    for (uint32_t row = 0; row < height; row++)
+    {
+        memcpy(&copy->data[row * width], &image->data[start_row + row * old_w], row_bytes);
+    }
 
     return copy;
 }

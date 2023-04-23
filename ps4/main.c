@@ -7,7 +7,7 @@
 
 int main(void)
 {
-    FILE *fr = fopen("data/assets/prva.akcia.bmp", "rb");
+    FILE *fr = fopen("data/assets/square.4x4.bmp", "rb");
 
     FILE *fw1 = fopen("build/results/out/original.bmp", "wb");
     FILE *fw2 = fopen("build/results/out/flipped-horizontally.bmp", "wb");
@@ -16,6 +16,7 @@ int main(void)
     FILE *fw5 = fopen("build/results/out/rotated-left.bmp", "wb");
     FILE *fw6 = fopen("build/results/out/scaled.bmp", "wb");
     FILE *fw7 = fopen("build/results/out/extracted.bmp", "wb");
+    FILE *fw8 = fopen("build/results/out/cropped.bmp", "wb");
 
     struct bmp_image *img = read_bmp(fr);
 
@@ -25,6 +26,7 @@ int main(void)
     struct bmp_image *rotated_left = rotate_left(img);
     struct bmp_image *scaled = scale(img, 0.548151f);
     struct bmp_image *extracted = extract(img, "br");
+    struct bmp_image *cropped = crop(img, 0, 0, 1, 1);
 
     write_bmp(fw1, img);
     write_bmp(fw2, flipped_horizontally);
@@ -33,6 +35,7 @@ int main(void)
     write_bmp(fw5, rotated_left);
     write_bmp(fw6, scaled);
     write_bmp(fw7, extracted);
+    write_bmp(fw8, cropped);
 
     fclose(fr);
     fclose(fw1);
@@ -42,6 +45,7 @@ int main(void)
     fclose(fw5);
     fclose(fw6);
     fclose(fw7);
+    fclose(fw8);
 
     free_bmp_image(img);
     free_bmp_image(flipped_horizontally);
@@ -50,6 +54,7 @@ int main(void)
     free_bmp_image(rotated_left);
     free_bmp_image(scaled);
     free_bmp_image(extracted);
+    free_bmp_image(cropped);
 
     return EXIT_SUCCESS;
 }
