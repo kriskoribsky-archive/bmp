@@ -28,13 +28,14 @@ int main(void)
 
     struct bmp_image *rotated_right = rotate_right(img);
     struct bmp_image *rotated_left = rotate_left(img);
-    struct bmp_image *scaled = scale(img, 1.5);
+    struct bmp_image *scaled = scale(img, 30.0f);
 
     write_bmp(fw1, img);
     write_bmp(fw2, rotated_right);
     write_bmp(fw3, rotated_left);
     write_bmp(fw4, scaled);
 
+    fclose(fr);
     fclose(fw1);
     fclose(fw2);
     fclose(fw3);

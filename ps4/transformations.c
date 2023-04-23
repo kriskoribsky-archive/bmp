@@ -4,7 +4,13 @@
 
 #include "transformations.h"
 #include "bmp.h"
-#include "bmp.c"
+#include "helpers.h"
+
+// extern struct bmp_image *copy_bmp(const struct bmp_image *image);
+// extern struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, uint32_t height);
+
+// PUBLIC IMPLEMENTATION
+// ================================================================================
 
 struct bmp_image *flip_horizontally(const struct bmp_image *image)
 {
@@ -21,11 +27,9 @@ struct bmp_image *flip_horizontally(const struct bmp_image *image)
     {
         for (uint32_t row = 0; row < height; row++)
         {
-            uint32_t offset = row * width;
-
-            struct pixel tmp = copy->data[offset + left_col];
-            copy->data[offset + left_col] = copy->data[offset + right_col];
-            copy->data[offset + right_col] = tmp;
+            struct pixel tmp = copy->data[row * width + left_col];
+            copy->data[row * width + left_col] = copy->data[row * width + right_col];
+            copy->data[row * width + right_col] = tmp;
         }
     }
     return copy;
@@ -135,5 +139,7 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
             memcpy(&copy->data[new_row * new_w + new_col], &image->data[row * w + col], sizeof(struct pixel));
         }
     }
+
+    CHECK_VALID_BMP(copy->header);
     return copy;
 }
