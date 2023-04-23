@@ -74,7 +74,10 @@ struct bmp_header *read_bmp_header(FILE *stream)
 
     swap_endianness(header); // swap to system's endianness
 
-    CHECK_VALID_BMP_AND_FREE(header, header, header);
+    if (!bmp_header_valid(header))
+    {
+        return NULL;
+    }
 
     return header;
 }

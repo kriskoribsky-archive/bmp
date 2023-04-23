@@ -125,12 +125,13 @@ struct bmp_image *crop(const struct bmp_image *image, const uint32_t start_y, co
     CHECK_NULL(copy);
 
     uint32_t old_w = image->header->width;
-    uint32_t start_row = start_y * old_w;
+    uint32_t old_h = image->header->height;
+    uint32_t start_row = (old_h - (start_y + height)) * old_w; // bmp is indexed bottom up
     size_t row_bytes = width * sizeof(struct pixel);
 
     for (uint32_t row = 0; row < height; row++)
     {
-        memcpy(&copy->data[row * width], &image->data[start_row + row * old_w], row_bytes);
+        memcpy(&copy->data[row * width], &image->data[start_row + row * old_w + start_x], row_bytes);
     }
 
     return copy;

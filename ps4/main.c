@@ -7,7 +7,7 @@
 
 int main(void)
 {
-    FILE *fr = fopen("data/assets/square.4x4.bmp", "rb");
+    FILE *fr = fopen("data/assets/saboteur.bmp", "rb");
 
     FILE *fw1 = fopen("build/results/out/original.bmp", "wb");
     FILE *fw2 = fopen("build/results/out/flipped-horizontally.bmp", "wb");
@@ -26,7 +26,7 @@ int main(void)
     struct bmp_image *rotated_left = rotate_left(img);
     struct bmp_image *scaled = scale(img, 0.548151f);
     struct bmp_image *extracted = extract(img, "br");
-    struct bmp_image *cropped = crop(img, 0, 0, 1, 1);
+    struct bmp_image *cropped = crop(img, 10, 0, 20, img->header->width);
 
     write_bmp(fw1, img);
     write_bmp(fw2, flipped_horizontally);
