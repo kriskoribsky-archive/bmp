@@ -6,9 +6,6 @@
 #include "bmp.h"
 #include "helpers.h"
 
-// extern struct bmp_image *copy_bmp(const struct bmp_image *image);
-// extern struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, uint32_t height);
-
 // PUBLIC IMPLEMENTATION
 // ================================================================================
 
@@ -120,8 +117,8 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
     CHECK_NULL(image);
 
     uint32_t w = image->header->width;
-    uint32_t new_w = (uint32_t)round(image->header->width * (double)factor);
-    uint32_t new_h = (uint32_t)round(image->header->height * (double)factor);
+    uint32_t new_w = (uint32_t)roundf((float)image->header->width * factor);
+    uint32_t new_h = (uint32_t)roundf((float)image->header->height * factor);
 
     struct bmp_image *copy = create_bmp(image->header, new_w, new_h);
     CHECK_NULL(copy);
@@ -136,17 +133,49 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
             memcpy(&copy->data[new_row * new_w + new_col], &image->data[row * w + col], sizeof(struct pixel));
         }
     }
-
     return copy;
 }
 
-// struct bmp_image *extract(const struct bmp_image *image, const char *colors_to_keep)
-// {
-//     CHECK_NULL(image);
+struct bmp_image *extract(const struct bmp_image *image, const char *colors_to_keep)
+{
+    CHECK_NULL(image);
+    CHECK_NULL(colors_to_keep);
 
-//     // parse colors
+    uint8_t blue = 0x00;
+    uint8_t green = 0x00;
+    uint8_t red = 0x00;
+    for (int c, i = 0; (c = colors_to_keep[i]) != '\0'; i++)
+    {
+        switch (c)
+        {
+        case 'b':
+            blue |= 0xFF;
+            break;
+        case 'g':
+            green |= 0xFF;
+            break;
+        case 'r':
+            red |= 0xFF;
+            break;
+        default:
+            return NULL;
+            break;
+        }
+    }
 
+    struct bmp_image *copy = copy_bmp(image);
+    CHECK_NULL(copy);
 
+    uint32_t w = copy->header->width;
+    uint32_t h = copy->header->height;
 
-//     struct bmp_image *copy = copy_bmp(image);
-// }
+    // pointer arithmetic
+    struct pixel *pixel = copy->data;
+    for (uint32_t i = 0; i < w * h; i++, pixel++)
+    {
+        pixel->blue &= blue;
+        pixel->green &= green;
+        pixel->red &= red;
+    }
+    return copy;
+}

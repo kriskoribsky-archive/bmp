@@ -19,14 +19,6 @@
 #define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
 #define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
 
-#define UNIFY_ENDIANNESS(header)     \
-    {                                \
-        if (IS_BIG_ENDIAN)           \
-        {                            \
-            swap_endianness(header); \
-        }                            \
-    }
-
 #define FREE(ptr)     \
     {                 \
         free(ptr);    \

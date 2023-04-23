@@ -51,7 +51,7 @@ bool write_bmp(FILE *stream, const struct bmp_image *image)
     uint8_t padding[pad_bytes];
     memset(padding, PADDING, pad_bytes);
 
-    UNIFY_ENDIANNESS(image->header); // swap back to default endian
+    swap_endianness(image->header); // swap back to default endian
 
     fseek(stream, offset, SEEK_SET);      // skip header & color pallette
     for (uint32_t i = 0; i < height; i++) // write padded pixel rows
@@ -66,13 +66,13 @@ struct bmp_header *read_bmp_header(FILE *stream)
 {
     CHECK_NULL(stream);
 
-    struct bmp_header *header = malloc(sizeof(struct bmp_header));
+    struct bmp_header *header = alloc_bmp_header();
     CHECK_NULL(header);
 
     fseek(stream, 0, SEEK_SET);
     fread(header, sizeof(struct bmp_header), 1, stream);
 
-    UNIFY_ENDIANNESS(header); // swap to system's endianness
+    swap_endianness(header); // swap to system's endianness
 
     CHECK_VALID_BMP_AND_FREE(header, header, header);
 
@@ -84,7 +84,7 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
     CHECK_NULL(stream);
     CHECK_NULL(header);
 
-    struct pixel *data = malloc(header->width * header->height * sizeof(struct pixel));
+    struct pixel *data = alloc_data(header->width, header->height);
     CHECK_NULL(data);
 
     uint32_t offset = header->offset;
@@ -108,8 +108,12 @@ void free_bmp_image(struct bmp_image *image)
         return;
     }
 
-    FREE(image->header);
-    FREE(image->data);
+    free(image->header);
+    image->header = NULL;
+
+    free(image->data);
+    image->data = NULL;
+
     free(image);
 }
 
@@ -120,17 +124,14 @@ struct bmp_image *copy_bmp(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    struct bmp_image *copy = malloc(sizeof(struct bmp_image));
+    struct bmp_image *copy = alloc_bmp_image();
     CHECK_NULL(copy);
 
-    struct bmp_header *header_copy = copy_bmp_header(image->header);
-    CHECK_NULL_AND_FREE(header_copy, copy, copy);
+    copy->header = copy_bmp_header(image->header);
+    CHECK_NULL_AND_FREE(copy->header, copy, copy);
 
-    struct pixel *data_copy = copy_data(image->header, image->data);
-    CHECK_NULL_AND_FREE(data_copy, copy, header_copy);
-
-    copy->header = header_copy;
-    copy->data = data_copy;
+    copy->data = copy_data(image->header, image->data);
+    CHECK_NULL_AND_FREE(copy->data, copy->header, copy);
 
     return copy;
 }
@@ -140,24 +141,21 @@ struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, ui
     CHECK_NULL(header);
     CHECK_VALID_BMP(header);
 
-    struct bmp_image *copy = malloc(sizeof(struct bmp_image));
+    struct bmp_image *copy = alloc_bmp_image();
     CHECK_NULL(copy);
 
-    struct bmp_header *header_copy = copy_bmp_header(header);
-    CHECK_NULL_AND_FREE(header_copy, copy, copy);
+    copy->header = copy_bmp_header(header);
+    CHECK_NULL_AND_FREE(copy->header, copy, copy);
 
     // update metadata & size
-    header_copy->width = width;
-    header_copy->height = height;
-    header_copy->size = bmp_file_size(header_copy);
-    CHECK_VALID_BMP_AND_FREE(header_copy, copy, header_copy);
+    copy->header->width = width;
+    copy->header->height = height;
+    copy->header->size = bmp_file_size(copy->header);
+    CHECK_VALID_BMP_AND_FREE(copy->header, copy, copy);
 
     // allocate memory for pixel array, but do not copy any data
-    struct pixel *data_copy = malloc(width * height * sizeof(struct pixel));
-    CHECK_NULL_AND_FREE(data_copy, copy, header_copy);
-
-    copy->header = header_copy;
-    copy->data = data_copy;
+    copy->data = alloc_data(width, height);
+    CHECK_NULL_AND_FREE(copy->data, copy->header, copy);
 
     return copy;
 }
@@ -166,12 +164,10 @@ struct bmp_header *copy_bmp_header(const struct bmp_header *header)
 {
     CHECK_NULL(header);
 
-    size_t bytes = sizeof(struct bmp_header);
-
-    struct bmp_header *header_copy = malloc(bytes);
+    struct bmp_header *header_copy = alloc_bmp_header();
     CHECK_NULL(header_copy);
 
-    memcpy(header_copy, header, bytes);
+    memcpy(header_copy, header, sizeof(struct bmp_header));
 
     return header_copy;
 }
@@ -181,12 +177,10 @@ struct pixel *copy_data(const struct bmp_header *header, const struct pixel *dat
     CHECK_NULL(header);
     CHECK_NULL(data);
 
-    size_t bytes = header->width * header->height * sizeof(struct pixel);
-
-    struct pixel *data_copy = malloc(bytes);
+    struct pixel *data_copy = alloc_data(header->width, header->height);
     CHECK_NULL(data_copy);
 
-    memcpy(data_copy, data, bytes);
+    memcpy(data_copy, data, header->width * header->height * sizeof(struct pixel));
 
     return data_copy;
 }
@@ -256,22 +250,25 @@ uint32_t pixel_array_size(const struct bmp_header *header)
 
 void swap_endianness(struct bmp_header *header)
 {
-    header->type = swap_uint16(header->type);
-    header->size = swap_uint32(header->size);
-    header->reserved1 = swap_uint16(header->reserved1);
-    header->reserved2 = swap_uint16(header->reserved2);
-    header->offset = swap_uint32(header->offset);
-    header->dib_size = swap_uint32(header->dib_size);
-    header->width = swap_uint32(header->width);
-    header->height = swap_uint32(header->height);
-    header->planes = swap_uint16(header->planes);
-    header->bpp = swap_uint16(header->bpp);
-    header->compression = swap_uint32(header->compression);
-    header->image_size = swap_uint32(header->image_size);
-    header->x_ppm = swap_uint32(header->x_ppm);
-    header->y_ppm = swap_uint32(header->y_ppm);
-    header->num_colors = swap_uint32(header->num_colors);
-    header->important_colors = swap_uint32(header->important_colors);
+    if (IS_BIG_ENDIAN)
+    {
+        header->type = swap_uint16(header->type);
+        header->size = swap_uint32(header->size);
+        header->reserved1 = swap_uint16(header->reserved1);
+        header->reserved2 = swap_uint16(header->reserved2);
+        header->offset = swap_uint32(header->offset);
+        header->dib_size = swap_uint32(header->dib_size);
+        header->width = swap_uint32(header->width);
+        header->height = swap_uint32(header->height);
+        header->planes = swap_uint16(header->planes);
+        header->bpp = swap_uint16(header->bpp);
+        header->compression = swap_uint32(header->compression);
+        header->image_size = swap_uint32(header->image_size);
+        header->x_ppm = swap_uint32(header->x_ppm);
+        header->y_ppm = swap_uint32(header->y_ppm);
+        header->num_colors = swap_uint32(header->num_colors);
+        header->important_colors = swap_uint32(header->important_colors);
+    }
 }
 
 uint16_t swap_uint16(uint16_t x)
