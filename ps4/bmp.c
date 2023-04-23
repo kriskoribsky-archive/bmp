@@ -14,7 +14,8 @@ struct bmp_image *read_bmp(FILE *stream)
 {
     CHECK_NULL(stream);
 
-    struct bmp_image *img = malloc(sizeof(struct bmp_image));
+    struct bmp_image *img = alloc_bmp_image();
+    CHECK_NULL(img);
 
     img->header = read_bmp_header(stream);
     if (img->header == NULL)
@@ -50,9 +51,7 @@ bool write_bmp(FILE *stream, const struct bmp_image *image)
     uint8_t padding[pad_bytes];
     memset(padding, PADDING, pad_bytes);
 
-    // swap back to little endian
-    if (IS_BIG_ENDIAN)
-        swap_endianness(image->header);
+    UNIFY_ENDIANNESS(image->header); // swap back to default endian
 
     fseek(stream, offset, SEEK_SET);      // skip header & color pallette
     for (uint32_t i = 0; i < height; i++) // write padded pixel rows
@@ -73,11 +72,11 @@ struct bmp_header *read_bmp_header(FILE *stream)
     fseek(stream, 0, SEEK_SET);
     fread(header, sizeof(struct bmp_header), 1, stream);
 
-    // swap to system's big endian
-    if (IS_BIG_ENDIAN)
-        swap_endianness(header);
+    UNIFY_ENDIANNESS(header); // swap to system's endianness
 
-    return bmp_header_valid(header) ? header : NULL;
+    CHECK_VALID_BMP_AND_FREE(header, header, header);
+
+    return header;
 }
 
 struct pixel *read_data(FILE *stream, const struct bmp_header *header)
@@ -104,9 +103,14 @@ struct pixel *read_data(FILE *stream, const struct bmp_header *header)
 
 void free_bmp_image(struct bmp_image *image)
 {
+    if (image == NULL)
+    {
+        return;
+    }
+
     FREE(image->header);
     FREE(image->data);
-    FREE(image);
+    free(image);
 }
 
 // HELPER IMPLEMENTATION
@@ -120,19 +124,10 @@ struct bmp_image *copy_bmp(const struct bmp_image *image)
     CHECK_NULL(copy);
 
     struct bmp_header *header_copy = copy_bmp_header(image->header);
-    if (header_copy == NULL)
-    {
-        FREE(copy);
-        return NULL;
-    }
+    CHECK_NULL_AND_FREE(header_copy, copy, copy);
 
     struct pixel *data_copy = copy_data(image->header, image->data);
-    if (data_copy == NULL)
-    {
-        FREE(copy);
-        FREE(header_copy);
-        return NULL;
-    }
+    CHECK_NULL_AND_FREE(data_copy, copy, header_copy);
 
     copy->header = header_copy;
     copy->data = data_copy;
@@ -149,26 +144,17 @@ struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, ui
     CHECK_NULL(copy);
 
     struct bmp_header *header_copy = copy_bmp_header(header);
-    if (header_copy == NULL)
-    {
-        FREE(copy);
-        return NULL;
-    }
+    CHECK_NULL_AND_FREE(header_copy, copy, copy);
 
     // update metadata & size
     header_copy->width = width;
     header_copy->height = height;
     header_copy->size = bmp_file_size(header_copy);
-    CHECK_VALID_BMP(header_copy);
+    CHECK_VALID_BMP_AND_FREE(header_copy, copy, header_copy);
 
     // allocate memory for pixel array, but do not copy any data
     struct pixel *data_copy = malloc(width * height * sizeof(struct pixel));
-    if (data_copy == NULL)
-    {
-        FREE(copy);
-        FREE(header_copy);
-        return NULL;
-    }
+    CHECK_NULL_AND_FREE(data_copy, copy, header_copy);
 
     copy->header = header_copy;
     copy->data = data_copy;
@@ -205,6 +191,32 @@ struct pixel *copy_data(const struct bmp_header *header, const struct pixel *dat
     return data_copy;
 }
 
+struct bmp_image *alloc_bmp_image(void)
+{
+    struct bmp_image *img = malloc(sizeof(struct bmp_image));
+    if (img == NULL)
+    {
+        return NULL;
+    }
+
+    img->header = NULL;
+    img->data = NULL;
+
+    return img;
+}
+
+struct bmp_header *alloc_bmp_header(void)
+{
+    struct bmp_header *header = malloc(sizeof(struct bmp_header));
+    return header;
+}
+
+struct pixel *alloc_data(uint32_t width, uint32_t height)
+{
+    struct pixel *data = malloc(width * height * sizeof(struct pixel));
+    return data;
+}
+
 bool bmp_header_valid(const struct bmp_header *header)
 {
     CHECK_METADATA(header->type == MAGIC);
@@ -229,7 +241,7 @@ uint32_t bmp_file_size(const struct bmp_header *header)
 
 uint32_t pixel_row_size(const struct bmp_header *header)
 {
-    return ((header->bpp * header->width) / DWORD) * BMPWORD;
+    return (uint32_t)(((float)(header->bpp * header->width) / DWORD) * BMPWORD);
 }
 
 uint8_t pixel_padding_size(const struct bmp_header *header)

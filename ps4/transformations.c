@@ -39,7 +39,7 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    struct bmp_image *copy = copy_bmp(image);
+    struct bmp_image *copy = create_bmp(image->header, image->header->width, image->header->height);
     CHECK_NULL(copy);
 
     uint32_t width = copy->header->width;
@@ -50,19 +50,16 @@ struct bmp_image *flip_vertically(const struct bmp_image *image)
     // bmp images are stored in bottom to top order
     for (uint32_t botom_row = 0, top_row = height - 1; botom_row < top_row; botom_row++, top_row--)
     {
-        struct pixel *tmp = malloc(bytes);
-        if (tmp == NULL)
-        {
-            free_bmp_image(copy);
-            return NULL;
-        }
-
-        memcpy(tmp, &copy->data[botom_row * width], bytes);
-        memcpy(&copy->data[botom_row * width], &copy->data[top_row * width], bytes);
-        memcpy(&copy->data[top_row * width], tmp, bytes);
-
-        FREE(tmp);
+        memcpy(&copy->data[botom_row * width], &image->data[top_row * width], bytes);
+        memcpy(&copy->data[top_row * width], &image->data[botom_row * width], bytes);
     }
+
+    // copy the middle row
+    if (height % 2 == 1)
+    {
+        memcpy(&copy->data[height / 2 * width], &image->data[height / 2 * width], bytes);
+    }
+
     return copy;
 }
 
@@ -140,6 +137,16 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
         }
     }
 
-    CHECK_VALID_BMP(copy->header);
     return copy;
 }
+
+// struct bmp_image *extract(const struct bmp_image *image, const char *colors_to_keep)
+// {
+//     CHECK_NULL(image);
+
+//     // parse colors
+
+
+
+//     struct bmp_image *copy = copy_bmp(image);
+// }

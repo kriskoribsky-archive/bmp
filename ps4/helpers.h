@@ -9,32 +9,74 @@
 // HELPER MACROS
 // ================================================================================
 
-#ifndef DEBUG
+#ifdef DEBUG
 #include <assert.h>
 #define ASSERT(expr) assert(expr)
 #else
 #define ASSERT(expr) ((void)0)
 #endif
 
-#define FREE(ptr) \
-    free(ptr);    \
-    ptr = NULL
-
-#define CHECK_NULL(ptr) \
-    if (ptr == NULL)    \
-        return NULL;
-
-#define CHECK_VALID_BMP(header)    \
-    if (!bmp_header_valid(header)) \
-        return NULL;
-
-#define CHECK_METADATA(expr) \
-    ASSERT((expr));          \
-    if ((expr) == false)     \
-        return false;
-
 #define IS_LITTLE_ENDIAN *(uint8_t *)&((uint16_t){1}) // host endianness
 #define IS_BIG_ENDIAN !IS_LITTLE_ENDIAN
+
+#define UNIFY_ENDIANNESS(header)     \
+    {                                \
+        if (IS_BIG_ENDIAN)           \
+        {                            \
+            swap_endianness(header); \
+        }                            \
+    }
+
+#define FREE(ptr)     \
+    {                 \
+        free(ptr);    \
+        (ptr) = NULL; \
+    }
+
+#define CHECK_NULL(ptr)    \
+    {                      \
+        if ((ptr) == NULL) \
+        {                  \
+            return NULL;   \
+        }                  \
+    }
+
+#define CHECK_NULL_AND_FREE(ptr, free1, free2) \
+    {                                          \
+        if ((ptr) == NULL)                     \
+        {                                      \
+            FREE(free1);                       \
+            FREE(free2);                       \
+            return NULL;                       \
+        }                                      \
+    }
+
+#define CHECK_VALID_BMP(header)        \
+    {                                  \
+        if (!bmp_header_valid(header)) \
+        {                              \
+            return NULL;               \
+        }                              \
+    }
+
+#define CHECK_VALID_BMP_AND_FREE(header, free1, free2) \
+    {                                                  \
+        if (!bmp_header_valid(header))                 \
+        {                                              \
+            FREE(free1);                               \
+            FREE(free2);                               \
+            return NULL;                               \
+        }                                              \
+    }
+
+#define CHECK_METADATA(expr) \
+    {                        \
+        ASSERT(expr);        \
+        if ((expr) == false) \
+        {                    \
+            return false;    \
+        }                    \
+    }
 
 /* currently supported types of bmp metadata */
 enum BMP_META
@@ -118,6 +160,41 @@ struct bmp_header *copy_bmp_header(const struct bmp_header *header);
 struct pixel *copy_data(const struct bmp_header *header, const struct pixel *data);
 
 /**
+ * Allocate memory for a `bmp_image` structure.
+ *
+ * Allocates memory for a `bmp_image` structure and initializes its fields
+ * to NULL values. Returns a pointer to the allocated `bmp_image` structure.
+ *
+ * @return Pointer to the allocated `bmp_image` structure or `NULL` if memory allocation fails
+ * @note The allocated memory should be freed with free() when it is no longer needed.
+ * @note The returned pointer should be checked for NULL to ensure successful allocation.
+ */
+struct bmp_image *alloc_bmp_image(void);
+
+/**
+ * Allocate memory for a `bmp_header` structure.
+ *
+ * Allocates memory for a `bmp_header` structure and leaves its fields uninitialized.
+ * Returns a pointer to the allocated `bmp_header` structure.
+ *
+ * @return Pointer to the allocated `bmp_header` structure or `NULL` if memory allocation fails
+ * @note The allocated memory should be freed with free() when it is no longer needed.
+ * @note The returned pointer should be checked for NULL to ensure successful allocation.
+ */
+struct bmp_header *alloc_bmp_header(void);
+
+/**
+ * Allocates memory for pixel data based on the provided width and height.
+ *
+ * @param width The width of the pixel data.
+ * @param height The height of the pixel data.
+ * @return A pointer to the allocated pixel data.
+ * @note The allocated memory should be freed with free() when it is no longer needed.
+ * @note The returned pointer should be checked for NULL to ensure successful allocation.
+ */
+struct pixel *alloc_data(uint32_t width, uint32_t height);
+
+/**
  * Check if bmp image header is valid.
  *
  * Use metadata from bmp header to determine whether bmp image is valid.
@@ -182,6 +259,15 @@ uint32_t pixel_array_size(const struct bmp_header *header);
 uint8_t pixel_padding_size(const struct bmp_header *header);
 
 /**
+ * Swap endianness of BMP header
+ *
+ * Swaps the endianness of a BMP header structure in place.
+ *
+ * @param header the BMP header structure to swap endianness
+ */
+void swap_endianness(struct bmp_header *header);
+
+/**
  * Swap uint16_t value endianness
  *
  * Swaps the endianness of a 16-bit unsigned integer value.
@@ -200,12 +286,3 @@ uint16_t swap_uint16(uint16_t x);
  * @return the value with swapped endianness
  */
 uint32_t swap_uint32(uint32_t x);
-
-/**
- * Swap endianness of BMP header
- *
- * Swaps the endianness of a BMP header structure in place.
- *
- * @param header the BMP header structure to swap endianness
- */
-void swap_endianness(struct bmp_header *header);
