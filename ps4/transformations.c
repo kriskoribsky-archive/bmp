@@ -77,7 +77,8 @@ struct bmp_image *rotate_right(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    struct bmp_image *copy = copy_bmp(image);
+    // switch width & height
+    struct bmp_image *copy = create_bmp(image->header, image->header->height, image->header->width);
     CHECK_NULL(copy);
 
     uint32_t width = copy->header->width;
@@ -91,11 +92,6 @@ struct bmp_image *rotate_right(const struct bmp_image *image)
             memcpy(&copy->data[(width - 1 - col) * height + row], &image->data[row * width + col], sizeof(struct pixel));
         }
     }
-
-    // update header metadata
-    copy->header->width = image->header->height;
-    copy->header->height = image->header->width;
-
     return copy;
 }
 
@@ -103,7 +99,8 @@ struct bmp_image *rotate_left(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    struct bmp_image *copy = copy_bmp(image);
+    // switch width & height
+    struct bmp_image *copy = create_bmp(image->header, image->header->height, image->header->width);
     CHECK_NULL(copy);
 
     uint32_t width = copy->header->width;
@@ -117,11 +114,6 @@ struct bmp_image *rotate_left(const struct bmp_image *image)
             memcpy(&copy->data[col * height + height - 1 - row], &image->data[row * width + col], sizeof(struct pixel));
         }
     }
-
-    // update header metadata
-    copy->header->width = image->header->height;
-    copy->header->height = image->header->width;
-
     return copy;
 }
 
