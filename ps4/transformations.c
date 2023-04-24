@@ -153,6 +153,10 @@ struct bmp_image *crop(const struct bmp_image *image, const uint32_t start_y, co
 struct bmp_image *scale(const struct bmp_image *image, float factor)
 {
     CHECK_NULL(image);
+    if (factor <= 0)
+    {
+        return NULL;
+    }
 
     uint32_t w = image->header->width;
     uint32_t new_w = (uint32_t)roundf((float)image->header->width * factor);
