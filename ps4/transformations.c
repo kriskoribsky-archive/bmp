@@ -77,12 +77,12 @@ struct bmp_image *rotate_right(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    // switch width & height
-    struct bmp_image *copy = create_bmp(image->header, image->header->height, image->header->width);
-    CHECK_NULL(copy);
+    uint32_t width = image->header->width;
+    uint32_t height = image->header->height;
 
-    uint32_t width = copy->header->width;
-    uint32_t height = copy->header->height;
+    // switch width & height
+    struct bmp_image *copy = create_bmp(image->header, height, width);
+    CHECK_NULL(copy);
 
     // overwrite copied pixel data with rotated data
     for (uint32_t row = 0; row < height; row++)
@@ -99,12 +99,12 @@ struct bmp_image *rotate_left(const struct bmp_image *image)
 {
     CHECK_NULL(image);
 
-    // switch width & height
-    struct bmp_image *copy = create_bmp(image->header, image->header->height, image->header->width);
-    CHECK_NULL(copy);
+    uint32_t width = image->header->width;
+    uint32_t height = image->header->height;
 
-    uint32_t width = copy->header->width;
-    uint32_t height = copy->header->height;
+    // switch width & height
+    struct bmp_image *copy = create_bmp(image->header, height, width);
+    CHECK_NULL(copy);
 
     // overwrite copied pixel data with rotated data
     for (uint32_t row = 0; row < height; row++)
