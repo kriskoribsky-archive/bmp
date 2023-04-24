@@ -422,6 +422,7 @@ struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, ui
     copy->header->width = width;
     copy->header->height = height;
     copy->header->size = bmp_file_size(copy->header);
+    copy->header->image_size = pixel_array_size(copy->header);
     CHECK_VALID_BMP_AND_FREE(copy->header, copy, copy);
 
     // allocate memory for pixel array, but do not copy any data
