@@ -4,10 +4,22 @@
 
 #include "transformations.h"
 #include "bmp.h"
-#include "helpers.h"
+
+// HELPER MACROS
+// ================================================================================
+#define CHECK_NULL(ptr)    \
+    {                      \
+        if ((ptr) == NULL) \
+        {                  \
+            return NULL;   \
+        }                  \
+    }
 
 // PUBLIC IMPLEMENTATION
 // ================================================================================
+
+extern struct bmp_image *copy_bmp(const struct bmp_image *image);
+extern struct bmp_image *create_bmp(const struct bmp_header *header, uint32_t width, uint32_t height);
 
 struct bmp_image *flip_horizontally(const struct bmp_image *image)
 {
