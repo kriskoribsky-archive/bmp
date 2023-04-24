@@ -103,7 +103,7 @@ DIR_OUT			:= build/results/out
 BUILD_DIRS		:= $(DIR_BLD) $(DIR_BIN) $(DIR_DEP) $(DIR_OBJ) $(DIR_RES) $(DIR_OUT)
 
 # Files
-BIN				?= $(DIR_BIN)build$(EXT)
+BIN				?= bmp
 SRC				?= $(wildcard $(DIR_SRC)*.c)
 
 OBJ				:= $(patsubst $(DIR_SRC)%.c, $(DIR_OBJ)%.o, $(SRC))
@@ -188,6 +188,7 @@ announce-test:
 
 clean:
 	$(MSG_CLEAN)
+	$(RM) $(BIN)
 	$(RM) -r $(DIR_BLD)
 	$(MSG_DONE)
 
@@ -224,7 +225,7 @@ $(DIR_OBJ)%.o:: $(DIR_UTI)%.c $(DIR_UTI)%.h
 $(DIR_RES)%.txt: $(DIR_BIN)%$(EXT)
 	-./$< > $@ 2>&1
 
-$(DIR_BIN)testh_%$(EXT): $(DIR_OBJ)testh_%.o $(DIR_OBJ)unity.o $(DIR_OBJ)%.o $(OBJ_UTI)
+$(DIR_BIN)testh_%$(EXT): $(DIR_OBJ)testh_%.o $(DIR_OBJ)unity.o $(DIR_OBJ)%.o $(OBJ_UTI) bmp.o
 	$(LINK) $^ -o $@ $(LIBS)
 
 $(DIR_BIN)testc_%$(EXT): $(DIR_OBJ)testc_%.o $(DIR_OBJ)unity.o $(OBJ_UTI)

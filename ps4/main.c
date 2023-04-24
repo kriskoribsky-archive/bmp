@@ -1,60 +1,128 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
 
 #include "bmp.h"
 #include "transformations.h"
 
-int main(void)
+void print_wrong_args(FILE *stream);
+
+void print_desc(FILE *stream);
+void print_usage(FILE *stream);
+void print_help(FILE *stream);
+
+int main(int arc, char **argv)
 {
-    FILE *fr = fopen("data/assets/saboteur.bmp", "rb");
+    FILE *input_stream = stdin;
+    FILE *output_stream = stdout;
 
-    FILE *fw1 = fopen("build/results/out/original.bmp", "wb");
-    FILE *fw2 = fopen("build/results/out/flipped-horizontally.bmp", "wb");
-    FILE *fw3 = fopen("build/results/out/flipped-vertically.bmp", "wb");
-    FILE *fw4 = fopen("build/results/out/rotated-right.bmp", "wb");
-    FILE *fw5 = fopen("build/results/out/rotated-left.bmp", "wb");
-    FILE *fw6 = fopen("build/results/out/scaled.bmp", "wb");
-    FILE *fw7 = fopen("build/results/out/extracted.bmp", "wb");
-    FILE *fw8 = fopen("build/results/out/cropped.bmp", "wb");
+    struct bmp_image *img = NULL;
 
-    struct bmp_image *img = read_bmp(fr);
+    int opt;
+    bool terminate = false;
+    while (!terminate && (opt = getopt(arc, argv, "rlhvc:s:e:o:i:")) != -1)
+    {
+        // terminate on each option except in/out streams
+        terminate = true;
 
-    struct bmp_image *flipped_horizontally = flip_horizontally(img);
-    struct bmp_image *flipped_vertically = flip_vertically(img);
-    struct bmp_image *rotated_right = rotate_right(img);
-    struct bmp_image *rotated_left = rotate_left(img);
-    struct bmp_image *scaled = scale(img, 0.548151f);
-    struct bmp_image *extracted = extract(img, "br");
-    struct bmp_image *cropped = crop(img, 10, 0, 20, img->header->width);
+        switch (opt)
+        {
+        case 'r':
+            img = rotate_right(read_bmp(input_stream));
+            break;
 
-    write_bmp(fw1, img);
-    write_bmp(fw2, flipped_horizontally);
-    write_bmp(fw3, flipped_vertically);
-    write_bmp(fw4, rotated_right);
-    write_bmp(fw5, rotated_left);
-    write_bmp(fw6, scaled);
-    write_bmp(fw7, extracted);
-    write_bmp(fw8, cropped);
+        case 'l':
+            img = rotate_left(read_bmp(input_stream));
+            break;
 
-    fclose(fr);
-    fclose(fw1);
-    fclose(fw2);
-    fclose(fw3);
-    fclose(fw4);
-    fclose(fw5);
-    fclose(fw6);
-    fclose(fw7);
-    fclose(fw8);
+        case 'h':
+            img = flip_horizontally(read_bmp(input_stream));
+            break;
+
+        case 'v':
+            img = flip_vertically(read_bmp(input_stream));
+            break;
+
+        case 'c':;
+            uint32_t start_y, start_x, height, width;
+            if ((sscanf(optarg, "%u,%u,%u,%u", &start_x, &start_y, &height, &width)) != 4)
+            {
+                print_wrong_args(stderr);
+                print_usage(stderr);
+                exit(EXIT_FAILURE);
+            }
+            img = crop(read_bmp(input_stream), start_y, start_x, height, width);
+            break;
+
+        case 's':;
+            float factor;
+            if ((sscanf(optarg, "%f", &factor)) != 1)
+            {
+                print_wrong_args(stderr);
+                print_usage(stderr);
+                exit(EXIT_FAILURE);
+            }
+            img = scale(read_bmp(input_stream), factor);
+            break;
+
+        case 'e':
+            img = extract(read_bmp(input_stream), optarg);
+            break;
+
+        case 'o':
+            output_stream = fopen(optarg, "wb");
+            terminate = false;
+            break;
+
+        case 'i':
+            input_stream = fopen(optarg, "rb");
+            terminate = false;
+            break;
+
+        default: // '?'
+            print_desc(stderr);
+            print_usage(stderr);
+            print_help(stderr);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    bool success = write_bmp(output_stream, img);
 
     free_bmp_image(img);
-    free_bmp_image(flipped_horizontally);
-    free_bmp_image(flipped_vertically);
-    free_bmp_image(rotated_right);
-    free_bmp_image(rotated_left);
-    free_bmp_image(scaled);
-    free_bmp_image(extracted);
-    free_bmp_image(cropped);
+    fclose(input_stream);
+    fclose(output_stream);
 
-    return EXIT_SUCCESS;
+    exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+void print_wrong_args(FILE *stream)
+{
+    fprintf(stream, "Error: Wrong option arguments\n");
+}
+
+void print_desc(FILE *stream)
+{
+    fprintf(stream, "Simple BMP transformation tool.\n");
+}
+
+void print_usage(FILE *stream)
+{
+    fprintf(stream, "Usage: bmp [OPTION]... [FILE]...\n");
+}
+
+void print_help(FILE *stream)
+{
+    fprintf(stream, "\n");
+    fprintf(stream, "With no FILE, read from standard input or write to standard output.");
+    fprintf(stream, "\n");
+    fprintf(stream, "  -r            rotate image right\n");
+    fprintf(stream, "  -l            rotate image left\n");
+    fprintf(stream, "  -h            flip image horizontally\n");
+    fprintf(stream, "  -v            flip image vertically\n");
+    fprintf(stream, "  -c y,x,h,w    crop image from position [y,x] of giwen height and widht\n");
+    fprintf(stream, "  -s factor     scale image by factor\n");
+    fprintf(stream, "  -e string     extract colors\n");
+    fprintf(stream, "  -o file       write output to file\n");
+    fprintf(stream, "  -i file       read input from the file\n");
 }
