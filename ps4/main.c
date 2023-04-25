@@ -93,6 +93,7 @@ int main(int arc, char **argv)
 
         case 'i':
         case 'o':
+        case 'h':
             break;
 
         default: // '?'
