@@ -11,36 +11,58 @@ void print_desc(FILE *stream);
 void print_usage(FILE *stream);
 void print_help(FILE *stream);
 
+#define OPTIONS "hrlxyc:s:e:o:i:"
+
 int main(int arc, char **argv)
 {
     FILE *input_stream = stdin;
     FILE *output_stream = stdout;
 
-    struct bmp_image *img = NULL;
-
+    // scan streams
     int opt;
-    bool terminate = false;
-    while (!terminate && (opt = getopt(arc, argv, "rlhvc:s:e:o:i:")) != -1)
+    while ((opt = getopt(arc, argv, OPTIONS)) != -1)
     {
-        // terminate on each option except in/out streams
-        terminate = true;
-
         switch (opt)
         {
-        case 'r':
-            img = rotate_right(read_bmp(input_stream));
+        case 'i':
+            input_stream = fopen(optarg, "rb");
             break;
 
-        case 'l':
-            img = rotate_left(read_bmp(input_stream));
+        case 'o':
+            output_stream = fopen(optarg, "wb");
             break;
 
         case 'h':
-            img = flip_horizontally(read_bmp(input_stream));
+            print_desc(stdout);
+            print_usage(stdout);
+            print_help(stdout);
+            exit(EXIT_SUCCESS);
+            break;
+        }
+    }
+
+    // scan transforms
+    struct bmp_image *img = read_bmp(input_stream);
+
+    optind = 0;
+    while ((opt = getopt(arc, argv, OPTIONS)) != -1)
+    {
+        switch (opt)
+        {
+        case 'r':
+            img = rotate_right(img);
             break;
 
-        case 'v':
-            img = flip_vertically(read_bmp(input_stream));
+        case 'l':
+            img = rotate_left(img);
+            break;
+
+        case 'x':
+            img = flip_horizontally(img);
+            break;
+
+        case 'y':
+            img = flip_vertically(img);
             break;
 
         case 'c':;
@@ -51,7 +73,7 @@ int main(int arc, char **argv)
                 print_usage(stderr);
                 exit(EXIT_FAILURE);
             }
-            img = crop(read_bmp(input_stream), start_y, start_x, height, width);
+            img = crop(img, start_y, start_x, height, width);
             break;
 
         case 's':;
@@ -62,25 +84,18 @@ int main(int arc, char **argv)
                 print_usage(stderr);
                 exit(EXIT_FAILURE);
             }
-            img = scale(read_bmp(input_stream), factor);
+            img = scale(img, factor);
             break;
 
         case 'e':
-            img = extract(read_bmp(input_stream), optarg);
-            break;
-
-        case 'o':
-            output_stream = fopen(optarg, "wb");
-            terminate = false;
+            img = extract(img, optarg);
             break;
 
         case 'i':
-            input_stream = fopen(optarg, "rb");
-            terminate = false;
+        case 'o':
             break;
 
         default: // '?'
-            print_desc(stderr);
             print_usage(stderr);
             print_help(stderr);
             exit(EXIT_FAILURE);
@@ -90,6 +105,7 @@ int main(int arc, char **argv)
     bool success = write_bmp(output_stream, img);
 
     free_bmp_image(img);
+
     fclose(input_stream);
     fclose(output_stream);
 
