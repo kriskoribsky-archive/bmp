@@ -114,7 +114,7 @@ TESTS			:= $(patsubst $(DIR_TST)%.c, $(DIR_RES)%.txt, $(wildcard $(DIR_TST)*.c))
 
 # Compilation
 PATHS			?= 
-MACRO			?= DEBUG
+MACRO			?= NDEBUG
 LIBS 			?= -lm
 RUN				?= 
 
@@ -225,7 +225,10 @@ $(DIR_OBJ)%.o:: $(DIR_UTI)%.c $(DIR_UTI)%.h
 $(DIR_RES)%.txt: $(DIR_BIN)%$(EXT)
 	-./$< > $@ 2>&1
 
-$(DIR_BIN)testh_%$(EXT): $(DIR_OBJ)testh_%.o $(DIR_OBJ)unity.o $(DIR_OBJ)%.o $(OBJ_UTI) bmp.o
+$(DIR_BIN)testh_bmp$(EXT): $(DIR_OBJ)testh_bmp.o $(DIR_OBJ)unity.o $(DIR_OBJ)bmp.o $(OBJ_UTI)
+	$(LINK) $^ -o $@ $(LIBS)
+
+$(DIR_BIN)testh_transformations$(EXT): $(DIR_OBJ)testh_transformations.o $(DIR_OBJ)unity.o $(DIR_OBJ)transformations.o $(DIR_OBJ)bmp.o $(OBJ_UTI)
 	$(LINK) $^ -o $@ $(LIBS)
 
 $(DIR_BIN)testc_%$(EXT): $(DIR_OBJ)testc_%.o $(DIR_OBJ)unity.o $(OBJ_UTI)

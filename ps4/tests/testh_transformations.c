@@ -58,7 +58,7 @@ int main(void)
 
 void test_right_rotate_header_size1(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_header_size1.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_header_size1.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -68,7 +68,7 @@ void test_right_rotate_header_size1(void)
 
 void test_right_rotate_header_size2(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_header_size2.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_header_size2.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -78,7 +78,7 @@ void test_right_rotate_header_size2(void)
 
 void test_right_rotate_header_size3(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_header_size3.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_header_size3.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -88,7 +88,7 @@ void test_right_rotate_header_size3(void)
 
 void test_right_rotate_image_size1(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_image_size1.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_image_size1.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -98,7 +98,7 @@ void test_right_rotate_image_size1(void)
 
 void test_right_rotate_image_size2(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_image_size2.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_image_size2.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -108,7 +108,7 @@ void test_right_rotate_image_size2(void)
 
 void test_right_rotate_image_size3(void)
 {
-    FILE *fp = fopen("data/test_right_rotate_image_size3.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_right_rotate_image_size3.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -121,7 +121,7 @@ void test_right_rotate_image_size3(void)
 
 void test_left_rotate_header_size1(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_header_size1.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_header_size1.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -131,7 +131,7 @@ void test_left_rotate_header_size1(void)
 
 void test_left_rotate_header_size2(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_header_size2.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_header_size2.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -141,7 +141,7 @@ void test_left_rotate_header_size2(void)
 
 void test_left_rotate_header_size3(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_header_size3.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_header_size3.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -151,7 +151,7 @@ void test_left_rotate_header_size3(void)
 
 void test_left_rotate_image_size1(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_image_size1.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_image_size1.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -161,7 +161,7 @@ void test_left_rotate_image_size1(void)
 
 void test_left_rotate_image_size2(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_image_size2.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_image_size2.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -171,7 +171,7 @@ void test_left_rotate_image_size2(void)
 
 void test_left_rotate_image_size3(void)
 {
-    FILE *fp = fopen("data/test_left_rotate_image_size3.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_left_rotate_image_size3.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *rotated_image = rotate_right(image);
 
@@ -184,7 +184,7 @@ void test_left_rotate_image_size3(void)
 
 void test_crop_new_image_size1(void)
 {
-    FILE *fp = fopen("data/test_crop_new_image_size1.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_crop_new_image_size1.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *cropped_image = crop(image, 0, 0, 1, 2);
 
@@ -194,7 +194,7 @@ void test_crop_new_image_size1(void)
 
 void test_crop_new_image_size2(void)
 {
-    FILE *fp = fopen("data/test_crop_new_image_size2.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_crop_new_image_size2.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *cropped_image = crop(image, 0, 0, 1, 2);
 
@@ -204,7 +204,7 @@ void test_crop_new_image_size2(void)
 
 void test_crop_new_image_size3(void)
 {
-    FILE *fp = fopen("data/test_crop_new_image_size3.bmp", "rb");
+    FILE *fp = fopen("data/tests/test_crop_new_image_size3.bmp", "rb");
     struct bmp_image *image = read_bmp(fp);
     struct bmp_image *cropped_image = crop(image, 0, 0, 1, 2);
 
