@@ -151,6 +151,7 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
     }
 
     uint32_t w = image->header->width;
+    uint32_t h = image->header->height;
     uint32_t new_w = (uint32_t)roundf((float)image->header->width * factor);
     uint32_t new_h = (uint32_t)roundf((float)image->header->height * factor);
 
@@ -161,8 +162,8 @@ struct bmp_image *scale(const struct bmp_image *image, float factor)
     {
         for (uint32_t new_col = 0; new_col < new_w; new_col++)
         {
-            uint32_t row = (uint32_t)((float)new_row / factor);
-            uint32_t col = (uint32_t)((float)new_col / factor);
+            uint32_t row = (uint32_t)((float)(new_row * h) / (float)new_h);
+            uint32_t col = (uint32_t)((float)(new_col * w) / (float)new_w);
 
             memcpy(&copy->data[new_row * new_w + new_col], &image->data[row * w + col], sizeof(struct pixel));
         }
