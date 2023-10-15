@@ -1,4 +1,4 @@
-# bmp
+# Bmp
 Simple CLI tool for bmp image manipulation.
 
 ## todo
